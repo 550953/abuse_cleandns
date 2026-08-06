@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CleanDNS · Конфигуратор задачи</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/tabler-icons.min.css">
+  <style>
+    body { background: #f4f6fa; }
+    .page-wrapper { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 5rem; }
+    .section-card { margin-bottom: 1.25rem; }
+    .badge-id {
+      font-size: 1rem;
+      font-family: monospace;
+      letter-spacing: 0.05em;
+      padding: .35em .7em;
+    }
+    .table-label {
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #626976;
+      letter-spacing: .05em;
+    }
+    .select-or-add {
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+    .select-or-add select { flex: 1; }
+    .spinner-border-sm { width: 1rem; height: 1rem; }
+    #result-block { display: none; }
+    .record-row {
+      border-left: 3px solid #206bc4;
+      padding: .3rem .75rem;
+      margin: .25rem 0;
+      background: #f0f4ff;
+      border-radius: 0 .25rem .25rem 0;
+      font-family: monospace;
+      font-size: .85rem;
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- Заголовок -->
+  <div class="mb-4">
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <span class="avatar avatar-sm bg-blue text-white rounded"><i class="ti ti-file-report"></i></span>
+      <h1 class="h2 mb-0">Конфигуратор задачи</h1>
+    </div>
+    <p class="text-secondary mb-0">Выберите или добавьте параметры — после сохранения получите ID записи в Airtable.</p>
+  </div>
+
+  <!-- Алерт о статусе загрузки -->
+  <div id="load-alert" class="alert alert-info mb-3" role="alert">
+    <div class="d-flex align-items-center gap-2">
+      <div class="spinner-border spinner-border-sm text-info" role="status"></div>
+      <div>Загрузка данных из Airtable…</div>
+    </div>
+  </div>
+  <div id="load-error" class="alert alert-danger mb-3" style="display:none" role="alert">
+    <i class="ti ti-alert-circle me-1"></i>
+    <span id="load-error-msg"></span>
+  </div>
+
+  <form id="task-form" novalidate>
+
+    <!-- EMAIL -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-mail me-1 text-blue"></i>Email отправителя</h3>
+        <div class="card-options">
+          <span class="table-label">tbllVtFoicvxeMD0b</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="select-or-add">
+          <select class="form-select" id="email-select" required>
+            <option value="">— загрузка… —</option>
+          </select>
+          <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal-email">
+            <i class="ti ti-plus"></i> Добавить
+          </button>
+        </div>
+        <div id="email-preview" class="mt-2 text-secondary small"></div>
+        <div class="invalid-feedback">Выберите email</div>
+      </div>
+    </div>
+
+    <!-- ПРОКСИ -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-shield-lock me-1 text-teal"></i>Прокси</h3>
+        <div class="card-options">
+          <span class="table-label">tblPNR6wFYrgMbFNO</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="select-or-add">
+          <select class="form-select" id="proxy-select">
+            <option value="">— без прокси —</option>
+          </select>
+          <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal-proxy">
+            <i class="ti ti-plus"></i> Добавить
+          </button>
+        </div>
+        <div id="proxy-preview" class="mt-2 text-secondary small"></div>
+      </div>
+    </div>
+
+    <!-- URL -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-link me-1 text-red"></i>URL нарушителя</h3>
+        <div class="card-options">
+          <span class="table-label">tblBliXmWrr1fxZh7</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="select-or-add">
+          <select class="form-select" id="url-select" required>
+            <option value="">— загрузка… —</option>
+          </select>
+          <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal-url">
+            <i class="ti ti-plus"></i> Добавить
+          </button>
+        </div>
+        <div id="url-preview" class="mt-2 text-secondary small"></div>
+        <div class="invalid-feedback">Выберите URL</div>
+      </div>
+    </div>
+
+    <!-- ОПИСАНИЕ -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-file-text me-1 text-yellow"></i>Описание (description)</h3>
+        <div class="card-options">
+          <span class="table-label">tblVj4cUtdrwu6TLR</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="select-or-add">
+          <select class="form-select" id="desc-select" required>
+            <option value="">— загрузка… —</option>
+          </select>
+          <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal-desc">
+            <i class="ti ti-plus"></i> Добавить
+          </button>
+        </div>
+        <div id="desc-preview" class="mt-2 text-secondary small"></div>
+        <div class="invalid-feedback">Выберите описание</div>
+      </div>
+    </div>
+
+    <!-- БРЕНД -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-building me-1 text-purple"></i>Бренд / компания</h3>
+        <div class="card-options">
+          <span class="table-label">tblWeS58LPUlbkml0</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="select-or-add">
+          <select class="form-select" id="brand-select" required>
+            <option value="">— загрузка… —</option>
+          </select>
+          <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal-brand">
+            <i class="ti ti-plus"></i> Добавить
+          </button>
+        </div>
+        <div id="brand-preview" class="mt-2 text-secondary small"></div>
+        <div class="invalid-feedback">Выберите бренд</div>
+      </div>
+    </div>
+
+    <!-- СКРИНШОТ (необязательно) -->
+    <div class="card section-card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-photo me-1 text-orange"></i>Скриншот <span class="text-muted small fw-normal">(необязательно)</span></h3>
+        <div class="card-options">
+          <span class="table-label">tblNKa0EiH1rFFpKc</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="select-or-add">
+          <select class="form-select" id="shot-select">
+            <option value="">— без скриншота —</option>
+          </select>
+        </div>
+        <div id="shot-preview" class="mt-2 text-secondary small"></div>
+      </div>
+    </div>
+
+    <!-- Кнопка -->
+    <div class="d-grid gap-2">
+      <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+        <i class="ti ti-device-floppy me-1"></i>Сохранить задачу в Airtable
+      </button>
+    </div>
+
+  </form>
+
+  <!-- РЕЗУЛЬТАТ -->
+  <div id="result-block" class="card mt-4 border-success">
+    <div class="card-header bg-success-lt">
+      <h3 class="card-title text-success"><i class="ti ti-circle-check me-1"></i>Задача сохранена</h3>
+    </div>
+    <div class="card-body">
+      <p class="mb-2 fw-semibold">Назначенные ID записей:</p>
+      <div id="result-ids"></div>
+      <hr>
+      <p class="text-secondary small mb-0">Бот подхватит эту задачу при следующем запуске.</p>
+    </div>
+  </div>
+
+  <div id="error-block" class="alert alert-danger mt-3" style="display:none" role="alert">
+    <i class="ti ti-alert-triangle me-1"></i>
+    <span id="error-msg"></span>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+
+<!-- ======== МОДАЛКИ «ДОБАВИТЬ» ======== -->
+
+<!-- EMAIL -->
+<div class="modal modal-blur fade" id="modal-email" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti ti-mail me-1"></i>Добавить email</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Email адрес *</label>
+          <input type="email" class="form-control" id="new-email" placeholder="user@example.com" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-check">
+            <input type="checkbox" class="form-check-input" id="new-email-active" checked>
+            <span class="form-check-label">Активный</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="save-email-btn">
+          <i class="ti ti-device-floppy me-1"></i>Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ПРОКСИ -->
+<div class="modal modal-blur fade" id="modal-proxy" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti ti-shield-lock me-1"></i>Добавить прокси</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2">
+          <label class="form-label">Строка прокси *</label>
+          <input type="text" class="form-control" id="new-proxy" placeholder="host:port:user:pass">
+          <div class="form-text">Форматы: <code>host:port:user:pass</code> · <code>user:pass@host:port</code> · <code>socks5://...</code></div>
+        </div>
+        <div class="mb-3">
+          <label class="form-check">
+            <input type="checkbox" class="form-check-input" id="new-proxy-active" checked>
+            <span class="form-check-label">Активный</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="save-proxy-btn">
+          <i class="ti ti-device-floppy me-1"></i>Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- URL -->
+<div class="modal modal-blur fade" id="modal-url" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti ti-link me-1"></i>Добавить URL нарушителя</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">URL *</label>
+          <input type="url" class="form-control" id="new-url" placeholder="https://phishing-site.example.com/page" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-check">
+            <input type="checkbox" class="form-check-input" id="new-url-active" checked>
+            <span class="form-check-label">Активный</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="save-url-btn">
+          <i class="ti ti-device-floppy me-1"></i>Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ОПИСАНИЕ -->
+<div class="modal modal-blur fade" id="modal-desc" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti ti-file-text me-1"></i>Добавить описание</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Краткое описание (description) *</label>
+          <textarea class="form-control" id="new-desc" rows="3" placeholder="This domain is used for phishing..." required></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Headers (необязательно)</label>
+          <textarea class="form-control" id="new-desc-headers" rows="3" placeholder="From: ...&#10;Subject: ..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Body (необязательно)</label>
+          <textarea class="form-control" id="new-desc-body" rows="4" placeholder="Email body content..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-check">
+            <input type="checkbox" class="form-check-input" id="new-desc-active" checked>
+            <span class="form-check-label">Активный</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="save-desc-btn">
+          <i class="ti ti-device-floppy me-1"></i>Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- БРЕНД -->
+<div class="modal modal-blur fade" id="modal-brand" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="ti ti-building me-1"></i>Добавить бренд</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Бренд / компания *</label>
+          <input type="text" class="form-control" id="new-brand" placeholder="PayPal, Google, Сбербанк…" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-check">
+            <input type="checkbox" class="form-check-input" id="new-brand-active" checked>
+            <span class="form-check-label">Активный</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary me-auto" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" class="btn btn-primary" id="save-brand-btn">
+          <i class="ti ti-device-floppy me-1"></i>Сохранить
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ======== JS ======== -->
+<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/js/tabler.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────
+// КОНФИГ — поменяйте только этот URL на адрес вашего Worker
+// ─────────────────────────────────────────────────────────────────
+const WORKER_URL = "https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev";
+
+// ─── Вспомогательные функции ──────────────────────────────────────
+async function apiFetch(path, options = {}) {
+  const res = await fetch(WORKER_URL + path, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`HTTP ${res.status}: ${txt}`);
+  }
+  return res.json();
+}
+
+function fillSelect(selectEl, records, valueField, labelFn, emptyLabel = "— выберите —") {
+  const prev = selectEl.value;
+  // Оставляем первый пустой option
+  while (selectEl.options.length > 1) selectEl.remove(1);
+  records.forEach((rec, i) => {
+    const opt = document.createElement("option");
+    opt.value = rec.id || String(i);
+    opt.textContent = labelFn(rec.fields);
+    opt.dataset.fields = JSON.stringify(rec.fields);
+    selectEl.appendChild(opt);
+  });
+  if (prev) selectEl.value = prev;
+}
+
+function getSelectedFields(selectEl) {
+  const opt = selectEl.options[selectEl.selectedIndex];
+  if (!opt || !opt.dataset.fields) return null;
+  try { return JSON.parse(opt.dataset.fields); } catch { return null; }
+}
+
+function showPreview(el, text) {
+  el.textContent = text ? `▸ ${text}` : "";
+}
+
+function modalSaveBtn(btnId, getData, tableKey, modalId, afterSave) {
+  document.getElementById(btnId).addEventListener("click", async () => {
+    const data = getData();
+    if (!data) return;
+    const btn = document.getElementById(btnId);
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Сохранение…';
+    try {
+      const result = await apiFetch("/api/add-record", {
+        method: "POST",
+        body: JSON.stringify({ table: tableKey, fields: data }),
+      });
+      const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+      modal?.hide();
+      await afterSave(result);
+    } catch (e) {
+      alert("Ошибка: " + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-device-floppy me-1"></i>Сохранить';
+    }
+  });
+}
+
+// ─── Инициализация — загрузка всех таблиц ──────────────────────
+const tables = [
+  { key: "emails",      selectId: "email-select",  previewId: "email-preview",  label: f => f.email,             empty: "— загрузка… —" },
+  { key: "proxies",     selectId: "proxy-select",  previewId: "proxy-preview",  label: f => f.proxy || "(пусто)", empty: "— без прокси —" },
+  { key: "urls",        selectId: "url-select",    previewId: "url-preview",    label: f => f.offending_url,     empty: "— загрузка… —" },
+  { key: "descs",       selectId: "desc-select",   previewId: "desc-preview",   label: f => (f.description || "").slice(0, 80) + (f.description?.length > 80 ? "…" : ""), empty: "— загрузка… —" },
+  { key: "brands",      selectId: "brand-select",  previewId: "brand-preview",  label: f => f.brand_or_company,  empty: "— загрузка… —" },
+  { key: "screenshots", selectId: "shot-select",   previewId: "shot-preview",   label: f => f.filename || f.full_path || "(нет имени)", empty: "— без скриншота —" },
+];
+
+let allData = {};
+
+async function loadAll() {
+  document.getElementById("load-alert").style.display = "";
+  document.getElementById("load-error").style.display = "none";
+  try {
+    const data = await apiFetch("/api/data");
+    allData = data;
+    tables.forEach(t => {
+      const sel = document.getElementById(t.selectId);
+      const records = data[t.key] || [];
+      fillSelect(sel, records, "id", t.label);
+      sel.addEventListener("change", () => {
+        const f = getSelectedFields(sel);
+        const preview = document.getElementById(t.previewId);
+        if (f && preview) showPreview(preview, t.label(f));
+      });
+    });
+    document.getElementById("load-alert").style.display = "none";
+  } catch (e) {
+    document.getElementById("load-alert").style.display = "none";
+    document.getElementById("load-error").style.display = "";
+    document.getElementById("load-error-msg").textContent = "Не удалось загрузить данные из Airtable: " + e.message;
+  }
+}
+
+// ─── Кнопки «Добавить» ───────────────────────────────────────────
+
+// EMAIL
+modalSaveBtn("save-email-btn",
+  () => {
+    const v = document.getElementById("new-email").value.trim();
+    if (!v) { alert("Введите email"); return null; }
+    return { email: v, active: document.getElementById("new-email-active").checked };
+  },
+  "emails", "modal-email",
+  async (result) => {
+    document.getElementById("new-email").value = "";
+    await loadAll();
+    document.getElementById("email-select").value = result.id;
+  }
+);
+
+// ПРОКСИ
+modalSaveBtn("save-proxy-btn",
+  () => {
+    const v = document.getElementById("new-proxy").value.trim();
+    if (!v) { alert("Введите строку прокси"); return null; }
+    return { proxy: v, active: document.getElementById("new-proxy-active").checked };
+  },
+  "proxies", "modal-proxy",
+  async (result) => {
+    document.getElementById("new-proxy").value = "";
+    await loadAll();
+    document.getElementById("proxy-select").value = result.id;
+  }
+);
+
+// URL
+modalSaveBtn("save-url-btn",
+  () => {
+    const v = document.getElementById("new-url").value.trim();
+    if (!v) { alert("Введите URL"); return null; }
+    return { offending_url: v, active: document.getElementById("new-url-active").checked };
+  },
+  "urls", "modal-url",
+  async (result) => {
+    document.getElementById("new-url").value = "";
+    await loadAll();
+    document.getElementById("url-select").value = result.id;
+  }
+);
+
+// ОПИСАНИЕ
+modalSaveBtn("save-desc-btn",
+  () => {
+    const v = document.getElementById("new-desc").value.trim();
+    if (!v) { alert("Введите описание"); return null; }
+    return {
+      description: v,
+      headers: document.getElementById("new-desc-headers").value.trim() || undefined,
+      body:    document.getElementById("new-desc-body").value.trim() || undefined,
+      active:  document.getElementById("new-desc-active").checked,
+    };
+  },
+  "descs", "modal-desc",
+  async (result) => {
+    document.getElementById("new-desc").value = "";
+    document.getElementById("new-desc-headers").value = "";
+    document.getElementById("new-desc-body").value = "";
+    await loadAll();
+    document.getElementById("desc-select").value = result.id;
+  }
+);
+
+// БРЕНД
+modalSaveBtn("save-brand-btn",
+  () => {
+    const v = document.getElementById("new-brand").value.trim();
+    if (!v) { alert("Введите бренд/компанию"); return null; }
+    return { brand_or_company: v, active: document.getElementById("new-brand-active").checked };
+  },
+  "brands", "modal-brand",
+  async (result) => {
+    document.getElementById("new-brand").value = "";
+    await loadAll();
+    document.getElementById("brand-select").value = result.id;
+  }
+);
+
+// ─── Submit задачи ───────────────────────────────────────────────
+document.getElementById("task-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const emailSel = document.getElementById("email-select");
+  const urlSel   = document.getElementById("url-select");
+  const descSel  = document.getElementById("desc-select");
+  const brandSel = document.getElementById("brand-select");
+
+  // Валидация обязательных полей
+  let valid = true;
+  [emailSel, urlSel, descSel, brandSel].forEach(sel => {
+    if (!sel.value) {
+      sel.classList.add("is-invalid");
+      valid = false;
+    } else {
+      sel.classList.remove("is-invalid");
+    }
+  });
+  if (!valid) return;
+
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Сохраняю…';
+  document.getElementById("result-block").style.display = "none";
+  document.getElementById("error-block").style.display  = "none";
+
+  const payload = {
+    email_id:      emailSel.value,
+    email_val:     getSelectedFields(emailSel)?.email,
+    proxy_id:      document.getElementById("proxy-select").value || null,
+    proxy_val:     getSelectedFields(document.getElementById("proxy-select"))?.proxy || null,
+    url_id:        urlSel.value,
+    url_val:       getSelectedFields(urlSel)?.offending_url,
+    desc_id:       descSel.value,
+    desc_val:      (getSelectedFields(descSel)?.description || "").slice(0, 80),
+    brand_id:      brandSel.value,
+    brand_val:     getSelectedFields(brandSel)?.brand_or_company,
+    screenshot_id: document.getElementById("shot-select").value || null,
+    screenshot_val:getSelectedFields(document.getElementById("shot-select"))?.filename || null,
+  };
+
+  try {
+    const result = await apiFetch("/api/submit-task", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    // Показываем ID записей
+    const idsEl = document.getElementById("result-ids");
+    idsEl.innerHTML = "";
+    if (result.records && result.records.length) {
+      result.records.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "record-row";
+        div.innerHTML = `<strong>${r.table_label}</strong> → <code>${r.id}</code>`;
+        idsEl.appendChild(div);
+      });
+    } else if (result.task_id) {
+      idsEl.innerHTML = `<div class="record-row"><strong>Task ID</strong> → <code>${result.task_id}</code></div>`;
+    }
+
+    document.getElementById("result-block").style.display = "";
+    window.scrollTo({ top: document.getElementById("result-block").offsetTop - 20, behavior: "smooth" });
+  } catch (e) {
+    document.getElementById("error-block").style.display = "";
+    document.getElementById("error-msg").textContent = "Ошибка при сохранении: " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-device-floppy me-1"></i>Сохранить задачу в Airtable';
+  }
+});
+
+// ─── Старт ───────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
