@@ -1,0 +1,16 @@
+# Wrangler
+.wrangler/
+.dev.vars
+
+# Node
+node_modules/
+.npm/
+
+# Env / secrets — НИКОГДА не коммитить
+.env
+.env.*
+*.secret
+
+# OS
+.DS_Store
+Thumbs.db
